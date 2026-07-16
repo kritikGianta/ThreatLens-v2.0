@@ -1,34 +1,12 @@
-// src/components/Login.js
-import React, { useState, useEffect, useRef } from 'react';
+// src/components/Login.jsx
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getApiErrorMessage } from '../services/api';
 
-const mono = '"JetBrains Mono", monospace';
-const head = '"Helvetica Neue", "Inter", sans-serif';
-
-// Animated terminal line that types itself
-const TypeLine = ({ text, delay = 0, color = '#555' }) => {
-  const [shown, setShown] = useState('');
-  useEffect(() => {
-    const t = setTimeout(() => {
-      let i = 0;
-      const iv = setInterval(() => {
-        i++;
-        setShown(text.slice(0, i));
-        if (i >= text.length) clearInterval(iv);
-      }, 28);
-      return () => clearInterval(iv);
-    }, delay);
-    return () => clearTimeout(t);
-  }, [text, delay]);
-  return (
-    <div style={{ fontFamily: mono, fontSize: '0.7rem', color, lineHeight: 1.6 }}>
-      {shown}<span style={{ animation: 'blink 1s step-end infinite', opacity: shown.length < text.length ? 1 : 0 }}>█</span>
-    </div>
-  );
-};
+const fontSans = '"Inter", "Helvetica Neue", Arial, sans-serif';
+const fontMono = '"JetBrains Mono", monospace';
 
 export default function Login() {
   const [form, setForm] = useState({ login: '', password: '' });
@@ -47,125 +25,255 @@ export default function Login() {
       await login(form.login, form.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Invalid credentials. Please try again.'));
+      setError(getApiErrorMessage(err, 'Invalid credentials. Please verify your login details.'));
     } finally { setLoading(false); }
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#fff', display: 'flex', overflow: 'hidden', fontFamily: head }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      background: '#F9F9F7', 
+      color: '#111111', 
+      display: 'flex', 
+      flexDirection: 'column',
+      fontFamily: fontSans 
+    }}>
       <style>{`
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes scan { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
-        .auth-input {
-          width: 100%; background: transparent; border: none; border-bottom: 1px solid #444;
-          color: #fff; font-family: ${mono}; font-size: 0.95rem; padding: 12px 0;
-          outline: none; transition: border-color 0.3s; box-sizing: border-box;
+        .ledger-input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          color: #111111;
+          font-family: ${fontSans};
+          font-size: 1.15rem;
+          font-weight: 500;
+          padding: 18px 0;
+          outline: none;
+          box-sizing: border-box;
         }
-        .auth-input:focus { border-bottom-color: #fff; }
-        .auth-input::placeholder { color: #666; }
+        .ledger-input::placeholder {
+          color: #A0A09C;
+          font-weight: 400;
+        }
+        .ledger-row {
+          border-bottom: 1px solid rgba(0,0,0,0.12);
+          position: relative;
+          transition: border-color 0.3s ease;
+        }
+        .ledger-row-focused {
+          border-bottom: 2px solid #111111;
+        }
       `}</style>
 
-      {/* Left panel — terminal log */}
-      <div style={{ width: '45%', borderRight: '1px solid #111', padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
-        {/* Scanning line */}
-        <div style={{ position: 'absolute', left: 0, right: 0, height: 1, background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent)', animation: 'scan 6s linear infinite', pointerEvents: 'none' }} />
-
-        <div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}
-            onClick={() => navigate('/')} style={{ cursor: 'pointer', marginBottom: 64 }}>
-            <div style={{ fontFamily: mono, fontSize: '0.8rem', color: '#555', letterSpacing: '0.1em' }}>THREATLENS ©</div>
-          </motion.div>
-
-          <div style={{ fontFamily: mono, fontSize: '0.65rem', color: '#333', marginBottom: 24 }}>// SYSTEM LOG</div>
-          <TypeLine text="> Initializing ThreatLens auth module..." delay={200} color="#888" />
-          <TypeLine text="> Connecting to security fabric..." delay={800} color="#777" />
-          <TypeLine text="> Verifying session tokens..." delay={1500} color="#888" />
-          <TypeLine text="> AWAITING CREDENTIALS" delay={2200} color="#bbb" />
+      {/* Top Architectural Bar */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '24px 48px', 
+        borderBottom: '1px solid rgba(0,0,0,0.12)',
+        background: '#F9F9F7'
+      }}>
+        <div 
+          onClick={() => navigate('/')} 
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 16 }}
+        >
+          <span style={{ fontWeight: 900, fontSize: '1.3rem', letterSpacing: '-0.04em' }}>ThreatLens®</span>
+          <span style={{ fontFamily: fontMono, fontSize: '0.7rem', opacity: 0.4, letterSpacing: '0.15em' }}>// PROTOCOL 4.2</span>
         </div>
-
-        <div>
-          {[
-            { num: '11', label: 'Detection Rules' },
-            { num: '<3s', label: 'AI Report Time' },
-            { num: '∞', label: 'Campaign Memory' },
-          ].map((s, i) => (
-            <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 2.5 + i * 0.15 }}
-              style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 12 }}>
-              <span style={{ fontFamily: head, fontSize: '1.8rem', fontWeight: 900, color: '#fff' }}>{s.num}</span>
-              <span style={{ fontFamily: mono, fontSize: '0.65rem', color: '#aaa', textTransform: 'uppercase' }}>{s.label}</span>
-            </motion.div>
-          ))}
-        </div>
+        <Link to="/" style={{ fontFamily: fontMono, fontSize: '0.75rem', color: '#111111', textDecoration: 'none', fontWeight: 700, letterSpacing: '0.05em' }}>
+          ← RETURN TO OVERVIEW
+        </Link>
       </div>
 
-      {/* Right panel — form */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 48px' }}>
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: '100%', maxWidth: 400 }}>
-
-          <div style={{ fontFamily: mono, fontSize: '0.7rem', color: '#999', marginBottom: 32, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            // ACCESS TERMINAL
+      {/* Main Architectural Ledger Split (NO CARDS!) */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: window.innerWidth < 900 ? 'column' : 'row' }}>
+        
+        {/* Left Side: Editorial Typography & Manifesto */}
+        <div style={{ 
+          width: window.innerWidth < 900 ? '100%' : '45%', 
+          borderRight: window.innerWidth < 900 ? 'none' : '1px solid rgba(0,0,0,0.12)', 
+          borderBottom: window.innerWidth < 900 ? '1px solid rgba(0,0,0,0.12)' : 'none',
+          padding: '64px 48px', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'space-between'
+        }}>
+          <div>
+            <div style={{ fontFamily: fontMono, fontSize: '0.7rem', fontWeight: 700, color: '#888', letterSpacing: '0.15em', marginBottom: '24px' }}>
+              01 // IDENTITY VERIFICATION LEDGER
+            </div>
+            
+            {['Autonomous', 'Threat Defense', 'Command.'].map((line, idx) => (
+              <div key={idx} style={{ borderBottom: '1px solid rgba(0,0,0,0.12)', paddingBottom: '12px', marginBottom: '12px' }}>
+                <span style={{ fontWeight: 900, fontSize: { xs: '2.5rem', lg: '3.5rem' }, letterSpacing: '-0.05em', lineHeight: 1 }}>{line}</span>
+              </div>
+            ))}
           </div>
 
-          <h1 style={{ fontFamily: head, fontSize: '2.8rem', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 8px', textTransform: 'uppercase', lineHeight: 1 }}>
-            Sign In.
-          </h1>
-          <p style={{ fontFamily: mono, fontSize: '0.75rem', color: '#888', margin: '0 0 48px' }}>
-            Your security command center awaits.
-          </p>
+          <div style={{ marginTop: '64px' }}>
+            <p style={{ fontSize: '1.2rem', lineHeight: 1.6, fontWeight: 400, color: '#444', margin: '0 0 24px', maxWidth: '440px' }}>
+              Establish secure identity credentials to initiate root telemetry streams and neural Copilot interfaces.
+            </p>
+            <div style={{ display: 'flex', gap: '32px', paddingTop: '24px', borderTop: '1px solid rgba(0,0,0,0.12)' }}>
+              <div>
+                <div style={{ fontFamily: fontMono, fontSize: '0.65rem', fontWeight: 700, color: '#888', textTransform: 'uppercase' }}>SECURITY TIER</div>
+                <div style={{ fontWeight: 800, fontSize: '1rem', marginTop: '4px' }}>ZERO-TRUST v2</div>
+              </div>
+              <div>
+                <div style={{ fontFamily: fontMono, fontSize: '0.65rem', fontWeight: 700, color: '#888', textTransform: 'uppercase' }}>ENCRYPTION</div>
+                <div style={{ fontWeight: 800, fontSize: '1rem', marginTop: '4px' }}>AES-256-GCM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Seamless Edge-to-Edge Architectural Form Sheet (ZERO CARD BOXES!) */}
+        <div style={{ flex: 1, padding: '64px 64px', display: 'flex', flexDirection: 'column', justify: 'center', maxWidth: '680px' }}>
+          
+          <div style={{ marginBottom: '48px' }}>
+            <div style={{ fontFamily: fontMono, fontSize: '0.75rem', fontWeight: 700, color: '#111', letterSpacing: '0.12em', marginBottom: '8px' }}>
+              [ SECTION 02 : CREDENTIAL ENTRY ]
+            </div>
+            <h1 style={{ fontSize: '3rem', fontWeight: 900, letterSpacing: '-0.04em', margin: 0, lineHeight: 1 }}>
+              Sign In.
+            </h1>
+          </div>
 
           <AnimatePresence>
             {error && (
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                style={{ fontFamily: mono, fontSize: '0.75rem', color: '#fff', background: '#111', border: '1px solid #333', padding: '12px 16px', marginBottom: 32 }}>
-                ⚠️ {error}
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }} 
+                animate={{ opacity: 1, height: 'auto' }} 
+                exit={{ opacity: 0, height: 0 }}
+                style={{ 
+                  fontFamily: fontMono, 
+                  fontSize: '0.8rem', 
+                  color: '#D32F2F', 
+                  borderTop: '1px solid #D32F2F',
+                  borderBottom: '1px solid #D32F2F',
+                  padding: '16px 0', 
+                  marginBottom: '32px' 
+                }}
+              >
+                ⚠️ AUDIT EXCEPTION: {error}
               </motion.div>
             )}
           </AnimatePresence>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-            <div>
-              <label style={{ fontFamily: mono, fontSize: '0.65rem', color: focused === 'login' ? '#fff' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 8, transition: 'color 0.3s' }}>
-                Username / Email
-              </label>
-              <input className="auth-input" type="text" placeholder="analyst or analyst@company.com"
-                value={form.login} onChange={e => setForm({ ...form, login: e.target.value })}
-                onFocus={() => setFocused('login')} onBlur={() => setFocused('')}
-                autoComplete="username" autoFocus />
+          <form onSubmit={handleSubmit}>
+            {/* Field 1: Username Sheet Row */}
+            <div className={`ledger-row ${focused === 'login' ? 'ledger-row-focused' : ''}`} style={{ marginBottom: '32px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <label style={{ 
+                  fontFamily: fontMono, 
+                  fontSize: '0.68rem', 
+                  fontWeight: 700, 
+                  color: focused === 'login' ? '#111' : '#777', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em' 
+                }}>
+                  01 / ANALYST IDENTIFIER OR EMAIL
+                </label>
+                {focused === 'login' && <span style={{ fontFamily: fontMono, fontSize: '0.65rem', color: '#111' }}>● ACTIVE</span>}
+              </div>
+              <input 
+                className="ledger-input" 
+                type="text" 
+                placeholder="analyst_root or user@enterprise.com"
+                value={form.login} 
+                onChange={e => setForm({ ...form, login: e.target.value })}
+                onFocus={() => setFocused('login')} 
+                onBlur={() => setFocused('')}
+                autoComplete="username" 
+                autoFocus 
+              />
             </div>
 
-            <div>
-              <label style={{ fontFamily: mono, fontSize: '0.65rem', color: focused === 'pass' ? '#fff' : '#aaa', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', justifyContent: 'space-between', marginBottom: 8, transition: 'color 0.3s' }}>
-                <span>Password</span>
-                <span onClick={() => setShowPassword(!showPassword)} style={{ cursor: 'pointer', color: '#aaa' }}>
-                  {showPassword ? 'HIDE' : 'SHOW'}
+            {/* Field 2: Password Sheet Row */}
+            <div className={`ledger-row ${focused === 'pass' ? 'ledger-row-focused' : ''}`} style={{ marginBottom: '48px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <label style={{ 
+                  fontFamily: fontMono, 
+                  fontSize: '0.68rem', 
+                  fontWeight: 700, 
+                  color: focused === 'pass' ? '#111' : '#777', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em' 
+                }}>
+                  02 / SECURITY PASSPHRASE
+                </label>
+                <span 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  style={{ fontFamily: fontMono, fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', color: '#111', textDecoration: 'underline' }}
+                >
+                  {showPassword ? 'HIDE PASSPHRASE' : 'REVEAL PASSPHRASE'}
                 </span>
-              </label>
-              <input className="auth-input" type={showPassword ? 'text' : 'password'} placeholder="••••••••"
-                value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                onFocus={() => setFocused('pass')} onBlur={() => setFocused('')}
-                autoComplete="current-password" />
+              </div>
+              <input 
+                className="ledger-input" 
+                type={showPassword ? 'text' : 'password'} 
+                placeholder="••••••••••••••••"
+                value={form.password} 
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                onFocus={() => setFocused('pass')} 
+                onBlur={() => setFocused('')}
+                autoComplete="current-password" 
+              />
             </div>
 
-            <motion.button type="submit" disabled={loading}
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            {/* Architectural Full-Width Action Bar (ZERO ROUNDED CORNERS!) */}
+            <motion.button 
+              type="submit" 
+              disabled={loading}
+              whileHover={{ bgcolor: '#222222' }} 
+              whileTap={{ scale: 0.995 }}
               style={{
-                background: '#fff', color: '#000', border: 'none', padding: '18px 32px',
-                fontFamily: head, fontWeight: 800, fontSize: '1rem', textTransform: 'uppercase',
-                letterSpacing: '-0.02em', cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s',
-              }}>
-              {loading ? '// AUTHENTICATING...' : 'ACCESS SYSTEM →'}
+                width: '100%',
+                background: '#111111', 
+                color: '#FFFFFF', 
+                border: 'none', 
+                padding: '24px 32px',
+                fontFamily: fontMono, 
+                fontWeight: 700, 
+                fontSize: '0.9rem', 
+                textTransform: 'uppercase',
+                letterSpacing: '0.15em', 
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1, 
+                transition: 'all 0.2s',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <span>{loading ? '// VERIFYING CREDENTIALS...' : 'AUTHENTICATE SESSION'}</span>
+              <span>→</span>
             </motion.button>
           </form>
 
-          <div style={{ fontFamily: mono, fontSize: '0.7rem', color: '#888', marginTop: 32 }}>
-            No account?{' '}
-            <Link to="/signup" style={{ color: '#fff', textDecoration: 'none', borderBottom: '1px solid #333' }}>
-              Initialize one →
+          {/* Ledger Footer */}
+          <div style={{ marginTop: '48px', paddingTop: '24px', borderTop: '1px solid rgba(0,0,0,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: fontSans, fontSize: '0.9rem', color: '#666' }}>Unregistered operator node?</span>
+            <Link 
+              to="/signup" 
+              style={{ 
+                fontFamily: fontMono, 
+                fontSize: '0.8rem', 
+                fontWeight: 700, 
+                color: '#111111', 
+                textDecoration: 'none',
+                borderBottom: '2px solid #111111',
+                paddingBottom: '4px',
+                letterSpacing: '0.05em'
+              }}
+            >
+              INITIALIZE ACCESS PROTOCOL →
             </Link>
           </div>
-        </motion.div>
+
+        </div>
+
       </div>
     </div>
   );
